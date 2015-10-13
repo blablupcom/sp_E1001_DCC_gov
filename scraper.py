@@ -108,6 +108,15 @@ for link in links:
         csvYr = csvfile[4].strip()
         if len(csvfile) == 10:
             csvYr = csvfile[6].strip()
+            csvMth = csvfile[5].strip()
+            if 'March' in csvMth:
+                csvMth = 'Q1'
+            if 'June' in csvMth:
+                csvMth = 'Q2'
+            if 'September' in csvMth:
+                csvMth = 'Q3'
+            if 'December' in csvMth:
+                csvMth = 'Q4'
         csvMth = convert_mth_strings(csvMth.upper())
         data.append([csvYr, csvMth, url])
 
