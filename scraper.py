@@ -1,12 +1,13 @@
  #-*- coding: utf-8 -*-
 
-#### IMPORTS 1.0
+#### IMPORTS 1.1
 import os
 import re
 import scraperwiki
 import urllib2
 from datetime import datetime
 from bs4 import BeautifulSoup
+import requests
 
 
 #### FUNCTIONS 1.0
@@ -37,19 +38,19 @@ def validateFilename(filename):
 
 def validateURL(url):
     try:
-        r = urllib2.urlopen(url)
+        r = requests.get(url)
         count = 1
-        while r.getcode() == 500 and count < 4:
+        while r.status_code == 500 and count < 4:
             print ("Attempt {0} - Status code: {1}. Retrying.".format(count, r.status_code))
             count += 1
-            r = urllib2.urlopen(url)
+            r = requests.get(url)
         sourceFilename = r.headers.get('Content-Disposition')
 
         if sourceFilename:
             ext = os.path.splitext(sourceFilename)[1].replace('"', '').replace(';', '').replace(' ', '')
         else:
             ext = os.path.splitext(url)[1]
-        validURL = r.getcode() == 200
+        validURL = r.status_code == 200
         validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx']
         return validURL, validFiletype
     except:
@@ -92,8 +93,8 @@ data = []
 
 #### READ HTML 1.0
 
-html = urllib2.urlopen(url)
-soup = BeautifulSoup(html, "lxml")
+html = requests.get(url)
+soup = BeautifulSoup(html.text, "lxml")
 
 
 #### SCRAPE DATA
@@ -101,24 +102,31 @@ soup = BeautifulSoup(html, "lxml")
 block = soup.find('div', attrs = {'id':'content_pri_sub1'})
 links = block.findAll('a', href=True)
 for link in links:
-    if 'CSV' in link.text:
-        url = 'http://www.derby.gov.uk' +link['href']
-        csvfile = link.text.strip().split(' ')
-        csvMth = csvfile[3][:3]
-        csvYr = csvfile[4].strip()
-        if len(csvfile) == 10:
-            csvYr = csvfile[6].strip()
-            csvMth = csvfile[5].strip()
-            if 'March' in csvMth:
-                csvMth = 'Q1'
-            if 'June' in csvMth:
-                csvMth = 'Q2'
-            if 'September' in csvMth:
-                csvMth = 'Q3'
-            if 'December' in csvMth:
-                csvMth = 'Q4'
-        csvMth = convert_mth_strings(csvMth.upper())
-        data.append([csvYr, csvMth, url])
+    if 'CSV' in link.text or 'XLS' in link.text:
+        if 'CSV' in link.text:
+            url = 'http://www.derby.gov.uk' +link['href']
+            csvfile = link.text.strip().split(' ')
+            csvMth = csvfile[3][:3]
+            csvYr = csvfile[4].strip()
+            if len(csvfile) == 10:
+                csvYr = csvfile[6].strip()
+                csvMth = csvfile[5].strip()
+                if 'March' in csvMth:
+                    csvMth = 'Q1'
+                if 'June' in csvMth:
+                    csvMth = 'Q2'
+                if 'September' in csvMth:
+                    csvMth = 'Q3'
+                if 'December' in csvMth:
+                    csvMth = 'Q4'
+            csvMth = convert_mth_strings(csvMth.upper())
+            data.append([csvYr, csvMth, url])
+        if 'Aug-12' in link['href'] or 'Mar-12' in link['href']:
+            url = 'http://www.derby.gov.uk' + link['href']
+            csvMth = url.split('-')[-2][:3]
+            csvYr = '20'+url.split('-')[-1][:2]
+            csvMth = convert_mth_strings(csvMth.upper())
+            data.append([csvYr, csvMth, url])
 
 
 #### STORE DATA 1.0
