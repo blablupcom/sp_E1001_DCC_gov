@@ -86,7 +86,7 @@ def convert_mth_strings ( mth_string ):
 #### VARIABLES 1.0
 
 entity_id = "E1001_DCC_gov"
-url = "http://www.derby.gov.uk/council-and-democracy/open-data-and-freedom-of-information/supplier-payments/"
+url = "https://www.derby.gov.uk/council-and-democracy/open-data-and-freedom-of-information/supplier-payments/"
 errors = 0
 data = []
 
